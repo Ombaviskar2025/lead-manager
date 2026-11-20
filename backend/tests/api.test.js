@@ -21,7 +21,7 @@ const lead = (over = {}) => ({
 const auth = (t) => ({ Authorization: `Bearer ${t}` });
 
 before(async () => {
-  app = createApp(openDatabase(':memory:'));
+  app = createApp(await openDatabase(':memory:'));
   const a = await request(app).post('/api/auth/signup').send({ name: 'Alice', email: 'alice@example.com', password: 'password123' });
   const b = await request(app).post('/api/auth/signup').send({ name: 'Bob', email: 'bob@example.com', password: 'password123' });
   tokenA = a.body.token;

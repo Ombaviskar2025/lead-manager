@@ -2,7 +2,7 @@
 
 A small full-stack web app for capturing and tracking sales leads — built for the Meru Technosoft Full Stack Developer screening assignment.
 
-**Stack:** React 19 + Vite (frontend) · Node.js + Express (backend) · SQLite via `better-sqlite3` (database) · JWT auth
+**Stack:** React 19 + Vite (frontend) · Node.js + Express (backend) · SQLite via `sql.js` (database) · JWT auth
 
 ## Features
 
@@ -93,7 +93,7 @@ frontend/
 
 ## Technology choices & why
 
-- **Express + SQLite:** the task is small and single-user-per-record; SQLite gives a real relational schema, constraints and indexes with zero setup (a reviewer can run it without installing a database server). `better-sqlite3` is synchronous, fast and simple.
+- **Express + SQLite:** the task is small and every record belongs to one user; SQLite gives a real relational schema, constraints and indexes with zero setup (no database server to install). I used `sql.js` (SQLite compiled to WebAssembly) rather than a native driver so `npm install` never needs a C++ toolchain or prebuilt binaries and behaves identically on Windows, macOS and Linux. A thin wrapper in `db.js` exposes a `prepare().get/all/run` API and saves the database file atomically (debounced) after writes, so data persists across restarts. For a real production workload I would move to PostgreSQL or a native SQLite driver.
 - **React + Vite:** matches the team's stack; Vite gives fast dev and a tiny production bundle. Plain CSS with design tokens keeps the dependency list short (only `react`, `react-dom`, `react-router-dom`).
 - **JWT (bcrypt-hashed passwords):** stateless auth that suits a separate SPA + API.
 
@@ -116,7 +116,7 @@ frontend/
 
 - Refresh tokens / httpOnly cookies instead of a token in `localStorage`; rate limiting on auth routes
 - Frontend component tests (Testing Library) and a Playwright smoke suite in CI
-- Migrations tool (e.g. Knex / Drizzle) instead of `CREATE TABLE IF NOT EXISTS`
+- PostgreSQL (or a native SQLite driver) for production; a migrations tool (e.g. Knex / Drizzle) instead of `CREATE TABLE IF NOT EXISTS`
 - Lead notes / activity timeline, CSV import/export, bulk actions
 - Server-side full-text search (SQLite FTS5) for large datasets
 - Docker setup and a deployed live demo
