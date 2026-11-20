@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const initSqlJs = require('sql.js');
 const config = require('./config');
+const { migrate, getVersion } = require('./migrations');
 
 /*
  * SQLite via sql.js (SQLite compiled to WebAssembly).
@@ -14,34 +15,6 @@ const config = require('./config');
  */
 
 const SAVE_DEBOUNCE_MS = 150;
-
-const SCHEMA = `
-  CREATE TABLE IF NOT EXISTS users (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    name          TEXT    NOT NULL,
-    email         TEXT    NOT NULL UNIQUE COLLATE NOCASE,
-    password_hash TEXT    NOT NULL,
-    created_at    TEXT    NOT NULL DEFAULT (datetime('now'))
-  );
-
-  CREATE TABLE IF NOT EXISTS leads (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    name       TEXT    NOT NULL,
-    email      TEXT    NOT NULL,
-    phone      TEXT    NOT NULL,
-    company    TEXT    NOT NULL,
-    source     TEXT    NOT NULL,
-    status     TEXT    NOT NULL DEFAULT 'New'
-               CHECK (status IN ('New','Contacted','Qualified','Lost')),
-    created_at TEXT    NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT    NOT NULL DEFAULT (datetime('now'))
-  );
-
-  CREATE INDEX IF NOT EXISTS idx_leads_user_status  ON leads(user_id, status);
-  CREATE INDEX IF NOT EXISTS idx_leads_user_created ON leads(user_id, created_at);
-  CREATE INDEX IF NOT EXISTS idx_leads_user_name    ON leads(user_id, name COLLATE NOCASE);
-`;
 
 class Database {
   constructor(sqlDb, filePath) {
@@ -88,6 +61,10 @@ class Database {
     };
   }
 
+  userVersion() {
+    return getVersion(this.raw);
+  }
+
   markDirty() {
     if (!this.filePath || this.saveTimer) return;
     this.saveTimer = setTimeout(() => this.save(), SAVE_DEBOUNCE_MS);
@@ -125,7 +102,7 @@ async function openDatabase(dbPath = config.dbPath) {
   }
 
   const db = new Database(existing ? new SQL.Database(existing) : new SQL.Database(), filePath);
-  db.exec(SCHEMA);
+  migrate(db.raw);
   db.save();
   return db;
 }
