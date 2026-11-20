@@ -3,9 +3,7 @@ const { openDatabase } = require('./db');
 const { createApp } = require('./app');
 
 async function main() {
-  if (config.nodeEnv === 'production' && config.jwtSecret === 'dev-only-secret-change-me') {
-    throw new Error('Refusing to start: set JWT_SECRET in production.');
-  }
+  config.assertProductionSafe();
 
   const db = await openDatabase();
   const app = createApp(db);
