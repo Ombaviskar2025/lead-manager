@@ -1,0 +1,22 @@
+# Render Blueprint: one Docker web service (API + UI) with a persistent disk for SQLite.
+# Persistent disks require a paid instance type on Render - the free tier has an
+# ephemeral filesystem, so the database would be wiped on every deploy/restart.
+services:
+  - type: web
+    name: lead-manager
+    runtime: docker
+    plan: starter
+    healthCheckPath: /api/health
+    disk:
+      name: leads-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_PATH
+        value: /data/leads.db
+      - key: TRUST_PROXY
+        value: "1"
+      - key: JWT_SECRET
+        generateValue: true
